@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini-Blockchain — DecodeLabs | Arsalan Khan</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f6f9;color:#1a1a1a;min-height:100vh}
+  header{background:linear-gradient(135deg,#0f4c81,#1a7abf);color:#fff;padding:20px 32px;display:flex;justify-content:space-between;align-items:center}
+  header h1{font-size:20px;font-weight:600;letter-spacing:-.3px}
+  header p{font-size:13px;opacity:.75;margin-top:3px}
+  .badge-header{background:rgba(255,255,255,.18);padding:5px 14px;border-radius:99px;font-size:12px;font-weight:500}
+  .main{max-width:900px;margin:0 auto;padding:24px 16px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .stat{background:#fff;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .stat .num{font-size:26px;font-weight:700;color:#0f4c81}
+  .stat .lbl{font-size:11px;color:#888;margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+  .panel{background:#fff;border-radius:14px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .panel-title{font-size:12px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+  .field-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+  input[type=text],input[type=number]{width:100%;padding:9px 12px;border:1.5px solid #e0e4ea;border-radius:9px;font-size:13px;color:#1a1a1a;background:#fafbfc;transition:border-color .15s;outline:none}
+  input[type=text]:focus,input[type=number]:focus{border-color:#1a7abf;background:#fff}
+  .diff-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .diff-row label{font-size:13px;color:#555;white-space:nowrap}
+  input[type=range]{flex:1;accent-color:#1a7abf;height:4px}
+  .diff-val{font-size:15px;font-weight:700;color:#0f4c81;min-width:16px}
+  .btn-mine{width:100%;padding:11px;font-size:14px;font-weight:600;background:#0f4c81;color:#fff;border:none;border-radius:10px;cursor:pointer;transition:background .15s,transform .1s;margin-top:6px}
+  .btn-mine:hover{background:#1a7abf}
+  .btn-mine:active{transform:scale(.98)}
+  .btn-mine:disabled{background:#a0b4c8;cursor:not-allowed;transform:none}
+  .pow-bar{height:6px;background:#e8edf3;border-radius:3px;margin:10px 0 6px;overflow:hidden}
+  .pow-fill{height:100%;background:#1a7abf;border-radius:3px;transition:width .08s;width:0%}
+  .log{background:#0d1b2a;color:#a8d8a8;border-radius:10px;padding:12px 14px;font-family:'Courier New',monospace;font-size:12.5px;min-height:70px;max-height:120px;overflow-y:auto;white-space:pre-wrap;line-height:1.7;margin-top:4px}
+  .chain-wrap{display:flex;flex-direction:column;gap:10px}
+  .block-card{border:1.5px solid #e0e4ea;border-radius:12px;padding:14px 16px;background:#fff;transition:border-color .2s,box-shadow .2s}
+  .block-card.genesis{border-color:#0f4c81;background:#f0f6ff}
+  .block-card.valid{border-color:#1a9e75;background:#f0faf6}
+  .block-card.tampered{border-color:#e24b4a;background:#fff5f5}
+  .block-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .block-index{font-size:14px;font-weight:600;color:#1a1a1a}
+  .badge{font-size:10px;padding:3px 10px;border-radius:99px;font-weight:600}
+  .badge-blue{background:#ddeeff;color:#0f4c81}
+  .badge-green{background:#d4f5e9;color:#0a6e4e}
+  .badge-red{background:#ffe4e4;color:#a32d2d}
+  .block-grid{display:grid;grid-template-columns:90px 1fr;gap:4px 10px;font-size:12px}
+  .bl{color:#888}
+  .bv{color:#1a1a1a;font-family:'Courier New',monospace;font-size:11.5px;word-break:break-all}
+  .bv.hash{color:#0f4c81;font-weight:600}
+  .btn-row{display:flex;gap:8px;margin-top:12px}
+  .btn-sm{flex:1;padding:7px 10px;font-size:12px;font-weight:500;border-radius:8px;border:1.5px solid #e0e4ea;background:#fff;color:#444;cursor:pointer;transition:background .12s,border-color .12s}
+  .btn-sm:hover{background:#f0f4f8;border-color:#c8d0da}
+  .btn-danger{border-color:#f5c0c0;color:#c0392b}
+  .btn-danger:hover{background:#fff0f0;border-color:#e24b4a}
+  .btn-validate{background:#0f4c81;color:#fff;border-color:#0f4c81;padding:7px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
+  .btn-validate:hover{background:#1a7abf}
+  .chain-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .arrow{text-align:center;font-size:18px;color:#1a7abf;margin:2px 0}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .empty-chain{text-align:center;padding:30px;color:#aaa;font-size:14px}
+  @media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}.field-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>&#x26D3; Mini-Blockchain Simulator</h1>
+    <p>DecodeLabs Internship — Blockchain Technology Project 1</p>
+  </div>
+  <div class="badge-header">Arsalan Khan &nbsp;|&nbsp; Batch 2026</div>
+</header>
+
+<div class="main">
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="num" id="stat-blocks">1</div><div class="lbl">Blocks</div></div>
+    <div class="stat"><div class="num" id="stat-diff">4</div><div class="lbl">Difficulty</div></div>
+    <div class="stat"><div class="num" id="stat-nonce">—</div><div class="lbl">Last nonce</div></div>
+    <div class="stat"><div class="num" id="stat-valid" style="color:#1a9e75">VALID</div><div class="lbl">Chain</div></div>
+  </div>
+
+  <!-- Mining Panel -->
+  <div class="panel">
+    <div class="panel-title">&#x26CF; Mine a new block</div>
+
+    <div class="diff-row">
+      <label>Proof of Work difficulty:</label>
+      <input type="range" min="1" max="5" value="4" id="diff-slider" step="1">
+      <span class="diff-val" id="diff-display">4</span>
+      <span style="font-size:12px;color:#aaa">leading zeros</span>
+    </div>
+
+    <div class="panel-title">Transaction data</div>
+    <div class="field-row">
+      <input type="text" id="inp-sender" placeholder="Sender" value="Arsalan Khan">
+      <input type="text" id="inp-receiver" placeholder="Receiver" value="DecodeLabs">
+      <input type="number" id="inp-amount" placeholder="Amount" value="100">
+    </div>
+
+    <button class="btn-mine" id="btn-mine" onclick="mineBlock()">
+      &#x26CF; Mine Block
+    </button>
+
+    <div class="pow-bar"><div class="pow-fill" id="pow-fill"></div></div>
+    <div class="log" id="log">Ready — Genesis Block is mined automatically on load. Click "Mine Block" to add transactions.</div>
+  </div>
+
+  <!-- Blockchain Panel -->
+  <div class="panel">
+    <div class="chain-header">
+      <div class="panel-title" style="margin:0">&#x1F517; Blockchain</div>
+      <button class="btn-validate" onclick="validateChain()">&#x1F6E1; Validate Chain</button>
+    </div>
+    <div class="chain-wrap" id="chain-wrap">
+      <div class="empty-chain">Mining genesis block...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let blockchain = [];
+let difficulty = 4;
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function computeHash(block) {
+  const s = JSON.stringify({
+    index: block.index,
+    timestamp: block.timestamp,
+    data: block.data,
+    prev_hash: block.prev_hash,
+    nonce: block.nonce
+  });
+  return await sha256(s);
+}
+
+async function mineBlock(isGenesis = false) {
+  const btn = document.getElementById('btn-mine');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Mining...';
+
+  const sender = isGenesis ? null : (document.getElementById('inp-sender').value || 'Alice');
+  const receiver = isGenesis ? null : (document.getElementById('inp-receiver').value || 'Bob');
+  const amount = isGenesis ? null : (parseFloat(document.getElementById('inp-amount').value) || 50);
+  const prev = blockchain.length > 0 ? blockchain[blockchain.length - 1] : null;
+
+  const block = {
+    index: blockchain.length,
+    timestamp: new Date().toLocaleString(),
+    data: isGenesis
+      ? { message: 'Genesis Block — The Beginning of the Chain' }
+      : { sender, receiver, amount },
+    prev_hash: prev ? prev.hash : '0',
+    nonce: 0,
+    hash: ''
+  };
+
+  const target = '0'.repeat(difficulty);
+  const log = document.getElementById('log');
+  const fill = document.getElementById('pow-fill');
+  log.textContent = `⛏ Mining Block #${block.index} (difficulty: ${difficulty})...\n`;
+
+  let attempts = 0;
+  const start = Date.now();
+
+  while (true) {
+    block.hash = await computeHash(block);
+    attempts++;
+    if (block.hash.startsWith(target)) break;
+    block.nonce++;
+    if (attempts % 300 === 0) {
+      const pct = Math.min(95, Math.round(attempts / 500));
+      fill.style.width = pct + '%';
+      log.textContent = `⛏ Mining Block #${block.index}...\n   Attempts: ${attempts.toLocaleString()}  |  Nonce: ${block.nonce.toLocaleString()}`;
+      await new Promise(r => setTimeout(r, 0));
+    }
+  }
+
+  fill.style.width = '100%';
+  setTimeout(() => { fill.style.width = '0%'; }, 900);
+
+  const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+  log.textContent = `✅ Block #${block.index} mined!\n   Nonce: ${block.nonce.toLocaleString()}  |  Attempts: ${attempts.toLocaleString()}  |  Time: ${elapsed}s\n   Hash: ${block.hash}`;
+
+  blockchain.push(block);
+  updateStats(attempts);
+  renderChain();
+
+  btn.disabled = false;
+  btn.innerHTML = '⛏ Mine Block';
+}
+
+function updateStats(lastNonce) {
+  document.getElementById('stat-blocks').textContent = blockchain.length;
+  document.getElementById('stat-diff').textContent = difficulty;
+  if (lastNonce) document.getElementById('stat-nonce').textContent = lastNonce.toLocaleString();
+}
+
+function renderChain() {
+  const wrap = document.getElementById('chain-wrap');
+  wrap.innerHTML = '';
+  blockchain.forEach((b, i) => {
+    const isGenesis = i === 0;
+
+    if (i > 0) {
+      const arrow = document.createElement('div');
+      arrow.className = 'arrow';
+      arrow.textContent = '⬇';
+      wrap.appendChild(arrow);
+    }
+
+    const div = document.createElement('div');
+    div.className = 'block-card' + (isGenesis ? ' genesis' : '');
+    div.id = 'block-' + i;
+
+    const dataHtml = isGenesis
+      ? `<span class="bl">Message</span><span class="bv">${b.data.message}</span>`
+      : `<span class="bl">Sender</span><span class="bv">${b.data.sender}</span>
+         <span class="bl">Receiver</span><span class="bv">${b.data.receiver}</span>
+         <span class="bl">Amount</span><span class="bv">${b.data.amount}</span>`;
+
+    div.innerHTML = `
+      <div class="block-header">
+        <span class="block-index">${isGenesis ? '&#11088;' : '&#x25A6;'} Block #${b.index}</span>
+        <span class="badge ${isGenesis ? 'badge-blue' : 'badge-green'}">${isGenesis ? 'Genesis' : 'Confirmed'}</span>
+      </div>
+      <div class="block-grid">
+        ${dataHtml}
+        <span class="bl">Timestamp</span><span class="bv">${b.timestamp}</span>
+        <span class="bl">Nonce</span><span class="bv">${b.nonce.toLocaleString()}</span>
+        <span class="bl">Prev hash</span><span class="bv">${b.prev_hash === '0' ? '0 (origin)' : b.prev_hash.slice(0, 30) + '...'}</span>
+        <span class="bl">Hash</span><span class="bv hash" id="hash-${i}">${b.hash}</span>
+      </div>
+      ${i > 0 ? `
+      <div class="btn-row">
+        <button class="btn-sm btn-danger" onclick="tamperBlock(${i})">&#x26A0; Simulate Tampering</button>
+        <button class="btn-sm" onclick="restoreBlock(${i})">&#x21BA; Restore</button>
+      </div>` : ''}
+    `;
+    wrap.appendChild(div);
+  });
+}
+
+async function validateChain() {
+  const log = document.getElementById('log');
+  const statEl = document.getElementById('stat-valid');
+  let valid = true;
+  log.textContent = '🔍 Validating blockchain integrity...\n\n';
+
+  for (let i = 1; i < blockchain.length; i++) {
+    const cur = blockchain[i];
+    const prev = blockchain[i - 1];
+    const recomputed = await computeHash(cur);
+    const card = document.getElementById('block-' + i);
+
+    if (cur.hash !== recomputed) {
+      card.className = 'block-card tampered';
+      log.textContent += `❌ Block #${i} — Hash mismatch! Data was tampered.\n   Stored:      ${cur.hash.slice(0, 20)}...\n   Recomputed:  ${recomputed.slice(0, 20)}...\n\n`;
+      valid = false;
+    } else if (cur.prev_hash !== prev.hash) {
+      card.className = 'block-card tampered';
+      log.textContent += `❌ Block #${i} — Broken chain link!\n\n`;
+      valid = false;
+    } else {
+      card.className = 'block-card valid';
+      log.textContent += `✅ Block #${i} — Hash integrity: OK | Chain linkage: OK\n`;
+    }
+  }
+
+  if (valid) {
+    log.textContent += '\n✅ CHAIN IS VALID — No tampering detected.';
+    statEl.textContent = 'VALID';
+    statEl.style.color = '#1a9e75';
+  } else {
+    log.textContent += '\n🚨 CHAIN INVALID — Tampering detected!';
+    statEl.textContent = 'TAMPERED';
+    statEl.style.color = '#e24b4a';
+  }
+}
+
+const originals = {};
+function tamperBlock(i) {
+  if (!originals[i]) originals[i] = JSON.parse(JSON.stringify(blockchain[i].data));
+  blockchain[i].data.amount = 99999;
+  document.getElementById('block-' + i).className = 'block-card tampered';
+  const badge = document.getElementById('block-' + i).querySelector('.badge');
+  if (badge) { badge.className = 'badge badge-red'; badge.textContent = 'Tampered'; }
+  document.getElementById('log').textContent = `🚨 Block #${i} tampered!\n   Amount changed to 99999 (attacker trying to steal funds).\n\n   Click "Validate Chain" to detect the attack.`;
+  document.getElementById('stat-valid').textContent = '?';
+  document.getElementById('stat-valid').style.color = '#e24b4a';
+}
+
+function restoreBlock(i) {
+  if (originals[i]) { blockchain[i].data = JSON.parse(JSON.stringify(originals[i])); delete originals[i]; }
+  document.getElementById('block-' + i).className = 'block-card valid';
+  const badge = document.getElementById('block-' + i).querySelector('.badge');
+  if (badge) { badge.className = 'badge badge-green'; badge.textContent = 'Confirmed'; }
+  document.getElementById('log').textContent = `✅ Block #${i} restored to original data.\n   Run "Validate Chain" to confirm.`;
+}
+
+document.getElementById('diff-slider').addEventListener('input', function () {
+  difficulty = parseInt(this.value);
+  document.getElementById('diff-display').textContent = difficulty;
+  document.getElementById('stat-diff').textContent = difficulty;
+});
+
+// Auto-mine genesis block on load
+(async () => { await mineBlock(true); })();
+</script>
+</body>
+</html>
